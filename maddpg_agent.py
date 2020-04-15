@@ -9,11 +9,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 NOISE_ORIGINAL = 1.0
 NOISE_REDUCTION = 1.0
-UPDATE_EVERY = 2
+UPDATE_EVERY = 10
 T_STOP_NOISE = 30000
-DISCOUNT = 1.0
-BATCH_SIZE = 256
-BUFFER_SIZE = 10000
+DISCOUNT = 0.95
+BATCH_SIZE = 1024
+BUFFER_SIZE = int(1e6)
 
 
 class MADDPG_Agent:
@@ -48,7 +48,6 @@ class MADDPG_Agent:
         self.add_noise = True
         self.t_step = 0
 
-        self.update_every = UPDATE_EVERY
         self.t_stop_noise = T_STOP_NOISE
 
         # Discount factor
@@ -101,8 +100,8 @@ class MADDPG_Agent:
             if self.t_step > self.t_stop_noise:
                 self.add_noise = False
 
-            # Learn from experience replay buffer every self.update_every episodes if buffer is long enough
-            if self.t_step % self.update_every == 0 and len(self.buffer) > BATCH_SIZE:
+            # Learn from experience replay buffer every UPDATE_EVERY episodes if buffer is long enough
+            if self.t_step % UPDATE_EVERY == 0 and len(self.buffer) > BATCH_SIZE:
                 experiences = [self.buffer.sample() for _ in range(self.num_agents)]
                 all_actions = []
                 all_next_actions = []

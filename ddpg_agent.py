@@ -8,9 +8,9 @@ import numpy as np
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-TAU = 0.001
-LR_ACTOR = 1e-4
-LR_CRITIC = 1e-3
+TAU = 0.01
+LR_ACTOR = 1e-3
+LR_CRITIC = 1e-2
 WEIGHT_DECAY_CRITIC = 0.0
 
 

@@ -76,14 +76,17 @@ if TRAIN:
     # Train new agent from scratch
     scores = maddpg(agent, n_episodes=10000)
 
-    # Plot scores
-    scores_100 = pd.Series(scores).rolling(window=100).mean().iloc[99:].values  # rolling average of 100 scores
+    # Calculate rolling average of scores over specified window of episodes
+    window = 100
+    scores_w = pd.Series(scores).rolling(window=window).mean().iloc[window - 1:].values
+
+    # Plot all scores and rolling average of scores
     plt.figure()
-    plt.plot(scores, color='b', label='All Scores')
-    plt.plot(scores_100, color='r', label='Average of latest 100 scores', linewidth=5)
-    plt.legend()
-    plt.xlabel('Episode')
+    plt.plot(scores, color='b', marker='o', label='All Scores')
+    plt.plot(np.arange(len(scores_w)) + window, scores_w, color='r', marker='o', label='Average of Last {} Scores'.format(window))
+    plt.title('Agent Score vs. Episode #')
     plt.ylabel('Score')
+    plt.xlabel('Episode #')
     plt.show()
 
 else:
