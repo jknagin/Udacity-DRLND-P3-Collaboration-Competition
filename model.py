@@ -35,12 +35,6 @@ class Network(nn.Module):
         self.batch_norm = nn.BatchNorm1d(256)
         self.reset_parameters()
 
-    def reset_parameters(self):
-        """Initialize weights randomly, with near zero values."""
-        self.fc1.weight.data.uniform_(*hidden_init(self.fc1))
-        self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
-        self.fc3.weight.data.uniform_(-3e-3, 3e-3)
-
     def forward(self, inp):
         if inp.dim() == 1:
             inp = torch.unsqueeze(inp, 0)
@@ -54,3 +48,11 @@ class Network(nn.Module):
             x = self.activation(x)
 
         return x
+
+    def reset_parameters(self):
+        """Initialize weights randomly, with near zero values."""
+        self.fc1.weight.data.uniform_(*hidden_init(self.fc1))
+        self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
+        self.fc3.weight.data.uniform_(-3e-3, 3e-3)
+
+

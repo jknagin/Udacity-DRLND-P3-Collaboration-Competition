@@ -23,6 +23,9 @@ class ReplayBuffer:
         self.batch_size = batch_size
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
 
+    def __len__(self):
+        return len(self.memory)
+
     def add(self, state: np.ndarray, action: np.ndarray, reward: List[float], next_state: np.ndarray, done: List[bool]) -> None:
         """Add a (S, A, R, S, done) tuple to the buffer."""
 
@@ -39,5 +42,3 @@ class ReplayBuffer:
         dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
         return states, actions, rewards, next_states, dones
 
-    def __len__(self):
-        return len(self.memory)

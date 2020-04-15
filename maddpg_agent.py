@@ -7,13 +7,14 @@ import numpy as np
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-NOISE_ORIGINAL = 1.0
-NOISE_REDUCTION = 1.0
-UPDATE_EVERY = 10
-T_STOP_NOISE = 30000
-DISCOUNT = 0.95
 BATCH_SIZE = 1024
 BUFFER_SIZE = int(1e6)
+DISCOUNT = 0.95
+NOISE_ORIGINAL = 1.0
+NOISE_REDUCTION = 1.0
+T_STOP_NOISE = 30000
+UPDATE_EVERY = 10
+
 
 
 class MADDPG_Agent:
@@ -62,6 +63,54 @@ class MADDPG_Agent:
     def act(self, states: np.ndarray) -> np.ndarray:
         """Calculate actions for all agents using all states noiselessly."""
         return self._local_act(torch.from_numpy(states.reshape(1, -1)).float().to(device))
+
+    def load(self, solution_dir: str = 'solution') -> None:
+        """Load model weights from directory.
+
+        :param solution_dir: name of directory from which to load model weights
+        """
+
+        for i, ag in enumerate(self.agents):
+            ag.actor_local.load_state_dict(torch.load(os.path.join(solution_dir, "actor{}.pth".format(i))))
+            ag.critic_local.load_state_dict(torch.load(os.path.join(solution_dir, "critic{}.pth".format(i))))
+            ag.hard_update()
+
+    def _local_act(self, states: torch.Tensor, noise: float = 0.0) -> np.ndarray:
+        """Get (noisy) actions from all agents using all agents' observations. P = batch size.
+
+        :param states: all states as a P x 48 tensor
+        :param noise: OU noise amplitude
+        :return: actions for all agents as P x 4 numpy array
+        """
+
+        P = states.shape[0]
+        actions = np.zeros((P, self.num_agents * self.action_size))
+        for idx in range(P):
+            for agent_idx in range(self.num_agents):
+                actions[idx, agent_idx * self.action_size:(agent_idx + 1) * self.action_size] = self.agents[
+                    agent_idx].local_act_noisy(
+                    states[idx, self.observation_size * agent_idx:self.observation_size * (agent_idx + 1)],
+                    noise=noise, add_noise=self.add_noise)
+        return actions
+
+    def save(self, solution_dir: str = 'solution') -> None:
+        """Save model weights to directory.
+
+        :param solution_dir: name of directory to save weights to
+        """
+
+        if not os.path.exists(solution_dir):
+            os.mkdir(solution_dir)
+        for i, ag in enumerate(self.agents):
+            torch.save(ag.actor_local.state_dict(), os.path.join(solution_dir, "actor{}.pth".format(i)))
+            torch.save(ag.critic_local.state_dict(), os.path.join(solution_dir, "critic{}.pth".format(i)))
+
+    def _terminal_reset(self):
+        """Zero the episode score. Reset the state and environment."""
+
+        self.episode_score = np.zeros(self.num_agents)
+        env_info = self.env.reset(train_mode=True)[self.brain_name]
+        self.state = env_info.vector_observations
 
     def train_for_episode(self) -> float:
         """Train the agents for one episode.
@@ -154,51 +203,6 @@ class MADDPG_Agent:
         self._terminal_reset()
         return score
 
-    def _terminal_reset(self):
-        """Zero the episode score. Reset the state and environment."""
 
-        self.episode_score = np.zeros(self.num_agents)
-        env_info = self.env.reset(train_mode=True)[self.brain_name]
-        self.state = env_info.vector_observations
 
-    def _local_act(self, states: torch.Tensor, noise: float = 0.0) -> np.ndarray:
-        """Get (noisy) actions from all agents using all agents' observations. P = batch size.
 
-        :param states: all states as a P x 48 tensor
-        :param noise: OU noise amplitude
-        :return: actions for all agents as P x 4 numpy array
-        """
-
-        P = states.shape[0]
-        actions = np.zeros((P, self.num_agents * self.action_size))
-        for idx in range(P):
-            for agent_idx in range(self.num_agents):
-                actions[idx, agent_idx * self.action_size:(agent_idx + 1) * self.action_size] = self.agents[
-                    agent_idx].local_act_noisy(
-                    states[idx, self.observation_size * agent_idx:self.observation_size * (agent_idx + 1)],
-                    noise=noise, add_noise=self.add_noise)
-                self.noise *= self.noise_reduction
-        return actions
-
-    def save(self, solution_dir: str = 'solution') -> None:
-        """Save model weights to directory.
-
-        :param solution_dir: name of directory to save weights to
-        """
-
-        if not os.path.exists(solution_dir):
-            os.mkdir(solution_dir)
-        for i, ag in enumerate(self.agents):
-            torch.save(ag.actor_local.state_dict(), os.path.join(solution_dir, "actor{}.pth".format(i)))
-            torch.save(ag.critic_local.state_dict(), os.path.join(solution_dir, "critic{}.pth".format(i)))
-
-    def load(self, solution_dir: str = 'solution') -> None:
-        """Load model weights from directory.
-
-        :param solution_dir: name of directory from which to load model weights
-        """
-
-        for i, ag in enumerate(self.agents):
-            ag.actor_local.load_state_dict(torch.load(os.path.join(solution_dir, "actor{}.pth".format(i))))
-            ag.critic_local.load_state_dict(torch.load(os.path.join(solution_dir, "actor{}.pth".format(i))))
-            ag.hard_update()

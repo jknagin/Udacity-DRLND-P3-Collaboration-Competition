@@ -8,9 +8,9 @@ import numpy as np
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-TAU = 0.01
 LR_ACTOR = 1e-3
 LR_CRITIC = 1e-2
+TAU = 0.01
 WEIGHT_DECAY_CRITIC = 0.0
 
 
@@ -49,6 +49,11 @@ class DDPGAgent:
 
         self.noise = OUNoise(self.action_size, seed)
 
+    def hard_update(self) -> None:
+        """Copy weights from local networks into target networks."""
+
+        self.soft_update(tau=1)
+
     def local_act_noisy(self, observation: torch.Tensor, noise: float = 0.0, add_noise: bool = True) -> np.ndarray:
         """
 
@@ -74,7 +79,4 @@ class DDPGAgent:
         for target_param, param in zip(self.critic_target.parameters(), self.critic_local.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
 
-    def hard_update(self) -> None:
-        """Copy weights from local networks into target networks."""
 
-        self.soft_update(tau=1)
