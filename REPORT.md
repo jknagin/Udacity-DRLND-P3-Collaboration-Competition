@@ -2,7 +2,7 @@
 [scores]: images/scores.png
 [MADDPG]: images/MADDPG.png
 
-# Udacity Deep Reinforcement Learning Nanodegree Project s3: Collaboration and Competition
+# Udacity Deep Reinforcement Learning Nanodegree Project 3: Collaboration and Competition
 
 ## Introduction
 The purpose of this project is to train two agents to play tennis together.
