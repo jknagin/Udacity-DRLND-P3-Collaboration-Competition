@@ -105,7 +105,7 @@ Main notebook for running the code. The notebook loads the Tennis environment, i
 
 ### Hyperparameters
 | Hyperparameter | Value | Description | Defined In |
-|-||||
+|-|-|-|-|
 | `BATCH_SIZE` | 1024 | Number of (S, A, R, S, done) tuples to sample from experience replay buffer at a time | `maddpg_agent.py` |
 | `BUFFER_SIZE` | 100000 | Maximum number of (S, A, R, S, done) tuple experience replay buffer | `maddpg_agent.py` |
 | `DISCOUNT` | 0.95 | Discount factor | `maddpg_agent.py` |
@@ -123,7 +123,7 @@ Main notebook for running the code. The notebook loads the Tennis environment, i
 The neural network architecture is defined fully in `model.py`.
 
 | Layer | Input Dim | Output Dim | Activation | Notes |
-|-|||||
+|-|-|-|-|-|
 | `FC1` | 24 (actor) or 52 (critic) | 256 | ReLU | For the actor network, the input dimension is the dimension of an individual DDPG agent's observation space. For the critic network, the input dimension is the dimension of the joint observation space plus the dimension of the joint action space for all agents. |
 | `BN` | 256 | 256 | None | Batch norm layer. |
 | `FC2` | 256 | 256 | ReLU | |
